@@ -3,6 +3,8 @@ SEExtenderPlugins
 
 This contains plugins for SEServerExtender
 
+Created wth VS2013 (it's all i have)
+
 
 GarbageCleanerPlugin
 ====================
