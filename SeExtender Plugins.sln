@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebInterfacePlugin", "WebIn
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MotdPlugin", "MotdPlugin\MotdPlugin.csproj", "{B1E7052F-5563-4480-8835-772408F48409}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlPlugin", "SqlPlugin\SqlPlugin.csproj", "{1C4E0419-1EAE-4441-91F5-DA211AFE8423}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{B1E7052F-5563-4480-8835-772408F48409}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B1E7052F-5563-4480-8835-772408F48409}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B1E7052F-5563-4480-8835-772408F48409}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C4E0419-1EAE-4441-91F5-DA211AFE8423}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C4E0419-1EAE-4441-91F5-DA211AFE8423}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C4E0419-1EAE-4441-91F5-DA211AFE8423}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C4E0419-1EAE-4441-91F5-DA211AFE8423}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

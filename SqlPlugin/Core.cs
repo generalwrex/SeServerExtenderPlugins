@@ -7,34 +7,34 @@ using System.ComponentModel;
 
 using SEModAPIExtensions.API; //required for plugins
 using SEModAPIExtensions.API.Plugin; //required for plugins
-using SEModAPIExtensions.API.Plugin.Events; 
+using SEModAPIExtensions.API.Plugin.Events; // plugin events
 
-using SEModAPIInternal.Support; 
-using SEModAPIInternal.API.Common; 
+using SEModAPIInternal.Support;
+using SEModAPIInternal.API.Common;
 
 namespace SqlPlugin
 {
-    public class Core : PluginBase
+	public class Core : PluginBase
 	{
-		#region "Attributes" 
+		#region "Attributes"
 
-			// variable definitions
-			// access static (string,bool, ect ect) m_variableName;
+		// variable definitions
+		// access static (string,bool, ect ect) m_variableName;
 
-			private static string m_databaseName;
+		private static string m_databaseName;
 
 		#endregion
 
 		#region "Constructors and Initializers
 
 		// Called when the server first launches
-		public Core() 
+		public Core()
 		{
 			Console.WriteLine("SQL Plugin '" + Id.ToString() + "' constructed!");
 		}
 
 		// Called when the server finishes loading
-		public override void Init() 
+		public override void Init()
 		{
 			Console.WriteLine("SQL Plugin '" + Id.ToString() + "' initialized!");
 			this.ConnectToDatabase();
@@ -42,16 +42,16 @@ namespace SqlPlugin
 
 		#endregion
 
-		#region "Properties" 
+		#region "Properties"
 
 		// get set variables, options on the properties panel for plugin
 		[Category("SQL Database")]
-        [Description("The name of the SQL database you want to connect to")]
-        [Browsable(true)]
-        [ReadOnly(false)]
+		[Description("The name of the SQL database you want to connect to")]
+		[Browsable(true)]
+		[ReadOnly(false)]
 		public string DatabaseName
 		{
-			get 
+			get
 			{
 				return m_databaseName; // Send m_databaseNames value to the plugins properties panel
 			}
@@ -68,7 +68,7 @@ namespace SqlPlugin
 
 		// Runs 10 times a second when server is running
 		public override void Update()
-		{ 
+		{
 			// Idk what to put here for an example, look at my MOTDPlugin
 		}
 
@@ -79,7 +79,7 @@ namespace SqlPlugin
 
 
 		private void ConnectToDatabase()
-		{	
+		{
 			// try to use try/catch blocks in something that could cause an exception
 			try
 			{
@@ -87,7 +87,7 @@ namespace SqlPlugin
 			}
 			catch (Exception ex)
 			{
-				LogManager.APILog.WriteLineAndConsole("SQL Plugin - Error: " + ex.ToString()); 
+				LogManager.APILog.WriteLineAndConsole("SQL Plugin - Error: " + ex.ToString());
 			}
 		}
 
