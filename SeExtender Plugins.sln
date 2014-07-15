@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Express 2013 for Windows Desktop
 VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GarbageCleanerPlugin", "GarbageCleanerPlugin\GarbageCleanerPlugin.csproj", "{4ADE36D0-4BE0-453D-8E37-183905E773C3}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MaxSpeedLockerPlugin", "MaxSpeedLockerPlugin\MaxSpeedLockerPlugin.csproj", "{06EB2169-3364-4C7C-AB45-F00477FA513F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerRconPlugin", "ServerRconPlugin\ServerRconPlugin.csproj", "{37524258-DBBE-4418-AA4A-BDEF3F0E3F7B}"
@@ -23,10 +21,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{4ADE36D0-4BE0-453D-8E37-183905E773C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4ADE36D0-4BE0-453D-8E37-183905E773C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4ADE36D0-4BE0-453D-8E37-183905E773C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4ADE36D0-4BE0-453D-8E37-183905E773C3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{06EB2169-3364-4C7C-AB45-F00477FA513F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{06EB2169-3364-4C7C-AB45-F00477FA513F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{06EB2169-3364-4C7C-AB45-F00477FA513F}.Release|Any CPU.ActiveCfg = Release|Any CPU
