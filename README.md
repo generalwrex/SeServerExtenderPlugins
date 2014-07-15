@@ -6,10 +6,6 @@ This contains plugins for SEServerExtender
 Created wth VS2013 (it's all i have)
 
 
-GarbageCleanerPlugin
-====================
-Clean up your map files in real-time with date/time setting.
-
 
 
 MaxSpeedLockerPlugin
@@ -43,3 +39,40 @@ WebInterfacePlugin
 Adding a web interface to GET and POST data in JSON format
 to improve your websites and create internet applications
 for your players to use.
+
+SqlPlugin
+====================
+
+description here
+
+
+
+
+Forking the Repo
+====================
+
+just updating fork:
+
+fetch master
+push
+
+updating fork when you have changes not ready for a pull request:
+
+stash
+fetch upstream
+push
+pop 
+merge(fix conflicts)
+
+
+ready for a pull request:
+
+stash
+fetch upstream
+rebase upstream/master
+pop(bring back changes)
+merge(fix conflicts)
+commit
+push
+pull request
+
