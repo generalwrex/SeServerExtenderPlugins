@@ -19,7 +19,7 @@ using SEModAPIInternal.Support;
 
 namespace MotdPlugin
 {
-    public class Core : PluginBase, IChatEventHandler //, IServerEventHandler
+    public class Core : PluginBase, IChatEventHandler
     {
 
 
@@ -217,7 +217,7 @@ namespace MotdPlugin
             try
             {
                 // If they said /motd                
-                if (client.message.Substring(0, 4).Contains(("/motd")))
+                if (client.message.Substring(0, 5).Contains(("/motd")))
                 {
                     ChatManager.Instance.SendPrivateChatMessage(id, m_motdTitle);
                     ChatManager.Instance.SendPrivateChatMessage(id, m_motdString);
@@ -231,16 +231,6 @@ namespace MotdPlugin
 
         public void OnChatSent(ChatManager.ChatEvent events)
         {
-        }
-
-        public void OnServerStarted(ServerEventManager.ServerEvent events)
-        {
-            Console.WriteLine("Server started at: " + events.timeStamp);
-        }
-
-        public void OnServerStopped(ServerEventManager.ServerEvent events)
-        {
-            Console.WriteLine("Server stopped at: " + events.timeStamp);
         }
 
         #endregion
