@@ -51,28 +51,4 @@ description here
 Forking the Repo
 ====================
 
-just updating fork:
-
-fetch master
-push
-
-updating fork when you have changes not ready for a pull request:
-
-stash
-fetch upstream
-push
-pop 
-merge(fix conflicts)
-
-
-ready for a pull request:
-
-stash
-fetch upstream
-rebase upstream/master
-pop(bring back changes)
-merge(fix conflicts)
-commit
-push
-pull request
-
+https://help.github.com/articles/fork-a-repo
