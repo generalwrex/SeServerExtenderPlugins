@@ -14,69 +14,72 @@ using SEModAPIExtensions.API.Plugin;
 using SEModAPIExtensions.API.Plugin.Events;
 
 using SEModAPIInternal.API.Common;
+using SEModAPIInternal.API.Server;
 using SEModAPIInternal.Support;
 
 namespace MotdPlugin
 {
-    public class Core : PluginBase, IChatEventHandler
+    public class Core : PluginBase, IChatEventHandler //, IServerEventHandler
     {
 
 
         #region "Attributes"
 
-        private static bool m_gameStopped;
-
-        // Attributes for data saving/loadng
         private static string m_dataFile;
         private static string m_assemblyFolder;
 
-        // Attributes for the Motd.
-        private static bool m_motdChanged;
-        private static bool m_motdActive;
         private static string m_motdString;
-
-        // Attributes for the Adverts.
-        private static bool m_advertsChanged;
-        private static bool m_advertsActive;
+        private static string m_motdTitle;
         private static string m_advertsString;
         private static string[] m_seperateAdverts;
 
+        private static bool m_isDebugging;
+
+        private static bool m_motdActive;
+        private static bool m_advertsActive;
+
+        private static bool m_motdChanged;
+        private static bool m_advertsChanged;
+
         private Dictionary<Timer, string> timers = new Dictionary<Timer, string>();
         private List<string> AdvertList = new List<string>();
-              
+
         #endregion
 
         #region "Constructors and Initializers"
 
-        
         public Core()
         {
             // Default settings if the file doesn't exist.
             m_motdActive = false;
-            m_motdString = "Write your Motd here";
-
             m_advertsActive = false;
-            m_advertsString = "advert:10/advert2:30";
 
-            m_gameStopped = true;
+            m_motdChanged = false;
+            m_advertsChanged = false;
+
+            m_motdTitle = "[Message Of The Day]";
+            m_motdString = "Write your Motd here";
+            m_advertsString = "advert::10;;advert2::30";
+
             // Get the current path of the DLL.
             m_assemblyFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             m_dataFile = Path.Combine(m_assemblyFolder, "MotdPlugin_Settings.xml");
-           
-            try 
-            { 
+
+            try
+            {
                 // Create the data file if is doesn't exist.
                 if (!File.Exists(m_dataFile))
                 {
                     XDocument doc = new XDocument(
                         new XElement("Settings",
                         new XElement("MotdActive", m_motdActive),
+                        new XElement("MotdTitle", m_motdTitle),
                         new XElement("MotdString", m_motdString),
                         new XElement("AdvertsActive", m_advertsActive),
                         new XElement("AdvertsString", m_advertsString)
                         )
                     );
-                    doc.Save(m_dataFile);                                    
+                    doc.Save(m_dataFile);
                 }
                 Console.WriteLine("Motd Plugin '" + Id.ToString() + "' constructed!");
             }
@@ -84,34 +87,51 @@ namespace MotdPlugin
             {
                 Console.WriteLine("Motd Plugin - Error: " + ex.ToString());
             }
-                      
         }
 
         public override void Init()
         {
-            m_gameStopped = false;
             Console.WriteLine("Motd Plugin '" + Id.ToString() + "' initialized!");
-            Console.WriteLine("Motd Plugin - Loading Data");  
+            Console.WriteLine("Motd Plugin - Loading Data");
             this.LoadData();
-            
-        }       
+            m_isDebugging = SandboxGameAssemblyWrapper.IsDebugging;
+        }
 
         #endregion
 
         #region "Properties"
 
         // Properties for the Motd.
-
         [Category("Motd Plugin")]
+        [Description("Enables or Disables the /motd chat command")]
         [Browsable(true)]
         [ReadOnly(false)]
         public bool MotdActive
         {
             get { return m_motdActive; }
-            set { m_motdActive = value; }
+            set
+            {
+                m_motdActive = value;
+                m_motdChanged = true;
+            }
         }
 
         [Category("Motd Plugin")]
+        [Description("The Title of your Message of the day,  shown above the Motd text.")]
+        [Browsable(true)]
+        [ReadOnly(false)]
+        public string MotdTitle
+        {
+            get { return m_motdTitle; }
+            set
+            {
+                m_motdTitle = value;
+                m_motdChanged = true;
+            }
+        }
+
+        [Category("Motd Plugin")]
+        [Description("Your Message of the day, dont make it longer than 4 lines of characters!")]
         [Browsable(true)]
         [ReadOnly(false)]
         public string Motd
@@ -120,33 +140,36 @@ namespace MotdPlugin
             set
             {
                 m_motdString = value;
-                m_motdChanged = true;                
+                m_motdChanged = true;
             }
         }
 
         // Properties for the Adverts.
-
         [Category("Adverts Plugin")]
+        [Description("Enables or Disables the adverts from showing.")]
         [Browsable(true)]
         [ReadOnly(false)]
         public bool AdvertsActive
         {
             get { return m_advertsActive; }
-            set { m_advertsActive = value; }
+            set
+            {
+                m_advertsActive = value;
+                m_advertsChanged = true;
+            }
         }
 
         [Category("Adverts Plugin")]
-        [Description("AdvertText:TimeInSeconds, use / to add another   advert:10/advert2:30")]
+        [Description("AdvertText::TimeInSeconds, use ;; to add another advert   Example: advert::10;;advert2::30")]
         [Browsable(true)]
         [ReadOnly(false)]
         public string Adverts
         {
             get { return m_advertsString; }
-            set 
-            { 
+            set
+            {
                 m_advertsString = value;
                 m_advertsChanged = true;
-
             }
         }
 
@@ -156,42 +179,31 @@ namespace MotdPlugin
 
         public override void Update()
         {
-            // Updates 10x a second.
-
-            // Checks and sets the new Motd text.
-            
-            if (m_motdActive && m_motdChanged && m_motdString != "")
+            // Checks and sets the new Motd text.        
+            if (m_motdChanged && m_motdString != "" && m_motdTitle != "")
             {
-                if (SandboxGameAssemblyWrapper.IsDebugging)            
-                    Console.WriteLine("Motd Plugin - New Motd: " + m_motdString);
-
                 this.SaveData();
 
-                m_motdChanged = false; 
+                m_motdChanged = false;
             }
 
             // Checks and sets the Adverts.
-            if (m_advertsActive && m_advertsChanged && m_advertsString != "")
+            if (m_advertsChanged && m_advertsString != "")
             {
-                this.ClearAdverts();
-                this.ParseAdverts();
-
-                if (SandboxGameAssemblyWrapper.IsDebugging) 
-                    Console.WriteLine("Motd Plugin - New Adverts: " + m_advertsString);
+                if (m_advertsActive)
+                {
+                    this.ClearAdverts();
+                    this.ParseAdverts();
+                }
+                else
+                {
+                    this.ClearAdverts();
+                }
 
                 this.SaveData();
 
                 m_advertsChanged = false;
             }
-
-            if (!SandboxGameAssemblyWrapper.Instance.IsGameStarted && !m_gameStopped)
-            {
-                this.ClearAdverts();
-
-                m_gameStopped = true;
-                Console.WriteLine("Motd Plugin - Server Stopped - Stopping Adverts");
-            }
-                
         }
 
         // Called when a client says something in chat.
@@ -199,15 +211,15 @@ namespace MotdPlugin
         {
             ulong id = client.sourceUserId;
 
+            if (!m_motdActive)
+                return;
+
             try
             {
                 // If they said /motd                
-                if (client.message.Contains(("/motd").Substring(0, 4)))
+                if (client.message.Substring(0, 4).Contains(("/motd")))
                 {
-                    if (SandboxGameAssemblyWrapper.IsDebugging) 
-                        Console.WriteLine("ChatPlugin - Sending MOTD to: " + id);
-
-                    ChatManager.Instance.SendPrivateChatMessage(id, "[Message Of The Day]:");
+                    ChatManager.Instance.SendPrivateChatMessage(id, m_motdTitle);
                     ChatManager.Instance.SendPrivateChatMessage(id, m_motdString);
                 }
             }
@@ -221,6 +233,16 @@ namespace MotdPlugin
         {
         }
 
+        public void OnServerStarted(ServerEventManager.ServerEvent events)
+        {
+            Console.WriteLine("Server started at: " + events.timeStamp);
+        }
+
+        public void OnServerStopped(ServerEventManager.ServerEvent events)
+        {
+            Console.WriteLine("Server stopped at: " + events.timeStamp);
+        }
+
         #endregion
 
         #region "Methods"
@@ -232,21 +254,27 @@ namespace MotdPlugin
             {
                 if (File.Exists(m_dataFile))
                 {
-                    XDocument doc = XDocument.Load(m_dataFile);    
+                    XDocument doc = XDocument.Load(m_dataFile);
                     foreach (XElement settings in doc.Descendants("Settings"))
                     {
                         if (settings.HasElements)
                         {
-                            Console.WriteLine("Motd Plugin - Loading Message Of The Day");
+                            if (m_isDebugging)
+                                Console.WriteLine("Motd Plugin - Loading Message Of The Day");
+
                             m_motdActive = Boolean.Parse(settings.Element("MotdActive").Value);
+                            m_motdTitle = settings.Element("MotdTitle").Value;
                             m_motdString = settings.Element("MotdString").Value;
 
-                            Console.WriteLine("Motd Plugin - Loading Adverts");
+                            if (m_isDebugging)
+                                Console.WriteLine("Motd Plugin - Loading Adverts");
+
                             m_advertsActive = Boolean.Parse(settings.Element("AdvertsActive").Value);
                             m_advertsString = settings.Element("AdvertsString").Value;
 
                             this.ParseAdverts();
-                            Console.WriteLine("Motd Plugin - All Data Loaded!");
+
+                            Console.WriteLine("Motd Plugin - Data Loaded!");
                         }
                     }
                 }
@@ -255,7 +283,7 @@ namespace MotdPlugin
             {
                 Console.WriteLine("Motd Plugin - Error: " + ex.ToString());
             }
-            
+
         }
 
         // Save data to the XML file.
@@ -263,19 +291,22 @@ namespace MotdPlugin
         {
             try
             {
-
                 if (File.Exists(m_dataFile))
                 {
                     XDocument xmlfile = XDocument.Load(m_dataFile);
                     foreach (XElement settings in xmlfile.Descendants("Settings"))
                     {
-                        settings.SetElementValue("MotdActive",m_motdActive);
+                        settings.SetElementValue("MotdActive", m_motdActive);
+                        settings.SetElementValue("MotdTitle", m_motdTitle);
                         settings.SetElementValue("MotdString", m_motdString);
                         settings.SetElementValue("AdvertsActive", m_advertsActive);
                         settings.SetElementValue("AdvertsString", m_advertsString);
                     }
-                   
-                    Console.WriteLine("Motd Plugin - Saving Data File");
+
+                    if (m_isDebugging)
+                        Console.WriteLine("Motd Plugin - Saving Data File");
+
+                    xmlfile.Save(m_dataFile);
                 }
             }
             catch (Exception ex)
@@ -297,15 +328,16 @@ namespace MotdPlugin
             timers.Clear();
             AdvertList.Clear();
         }
-        
+
         private void ParseAdverts()
         {
             try
             {
-                Console.WriteLine("Motd Plugin - Parsing Adverts");
+                if (m_isDebugging)
+                    Console.WriteLine("Motd Plugin - Parsing Adverts");
 
-                // Seperate the adverts at the colon.
-                m_seperateAdverts = m_advertsString.Split(new string[] { "/" }, StringSplitOptions.None);
+                // Seperate the adverts at the semicolons.
+                m_seperateAdverts = m_advertsString.Split(new string[] { ";;" }, StringSplitOptions.None);
 
                 // Add all the adverts to the AdvertList
                 AdvertList.AddRange(m_seperateAdverts);
@@ -317,7 +349,7 @@ namespace MotdPlugin
                     // When the time is up for each advert it prints to Chat.
                     AdvertList.ForEach(delegate(String advert)
                     {
-                        string[] splitadverts = advert.Split(new string[] { ":" },
+                        string[] splitadverts = advert.Split(new string[] { "::" },
                             StringSplitOptions.None);
 
                         // Setup the timers.
@@ -338,13 +370,13 @@ namespace MotdPlugin
                     });
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine("Motd Plugin - Error: " + ex.ToString());
             }
 
         }
-        
+
         #endregion
     }
 }
