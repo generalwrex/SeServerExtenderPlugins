@@ -337,7 +337,7 @@ namespace MotdPlugin
                 m_seperateAdverts = m_advertsString.Split(new string[] { ";;" }, StringSplitOptions.None);
 
 				if (m_isDebugging)
-					Console.WriteLine("Motd Plugin - Parsed {0} Adverts.", m_seperateAdverts);
+					Console.WriteLine("Motd Plugin - Parsed {0} Adverts.", m_seperateAdverts.Count());
 
                 // Add all the adverts to the AdvertList
                 AdvertList.AddRange(m_seperateAdverts);

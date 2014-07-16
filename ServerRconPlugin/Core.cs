@@ -51,6 +51,9 @@ namespace ServerRconPlugin
 		{
 		}
 
+		public override void Shutdown()
+		{			
+		}
 		
 		#endregion
 
