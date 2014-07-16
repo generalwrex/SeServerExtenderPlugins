@@ -72,6 +72,9 @@ namespace SqlPlugin
 			// Idk what to put here for an example, look at my MOTDPlugin
 		}
 
+		public override void Shutdown()
+		{
+		}
 
 		#endregion
 

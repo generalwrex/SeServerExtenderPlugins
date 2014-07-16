@@ -50,6 +50,10 @@ namespace WebInterfacePlugin
 		public override void Update()
 		{
         }
+
+		public override void Shutdown()
+		{
+		}
         #endregion
 
     }

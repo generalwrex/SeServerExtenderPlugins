@@ -58,8 +58,8 @@ namespace MotdPlugin
             m_advertsChanged = false;
 
             m_motdTitle = "[Message Of The Day]";
-            m_motdString = "Write your Motd here";
-            m_advertsString = "advert::10;;advert2::30";
+            m_motdString = "Write your Motd here.";
+			m_advertsString = "Do /Motd to see the Message of the day!::500";
 
             // Get the current path of the DLL.
             m_assemblyFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
@@ -233,6 +233,13 @@ namespace MotdPlugin
         {
         }
 
+		// Called when the server is shutdown, or plugin is unloaded.
+		public override void Shutdown()
+		{
+			this.SaveData();
+			this.ClearAdverts();
+		}
+
         #endregion
 
         #region "Methods"
@@ -329,6 +336,9 @@ namespace MotdPlugin
                 // Seperate the adverts at the semicolons.
                 m_seperateAdverts = m_advertsString.Split(new string[] { ";;" }, StringSplitOptions.None);
 
+				if (m_isDebugging)
+					Console.WriteLine("Motd Plugin - Parsed {0} Adverts.", m_seperateAdverts);
+
                 // Add all the adverts to the AdvertList
                 AdvertList.AddRange(m_seperateAdverts);
 
@@ -339,6 +349,12 @@ namespace MotdPlugin
                     // When the time is up for each advert it prints to Chat.
                     AdvertList.ForEach(delegate(String advert)
                     {
+						if (!advert.Contains("::"))
+						{
+							Console.WriteLine("Adverts must contain two semi-colons before the time!");
+							return;
+						}
+
                         string[] splitadverts = advert.Split(new string[] { "::" },
                             StringSplitOptions.None);
 

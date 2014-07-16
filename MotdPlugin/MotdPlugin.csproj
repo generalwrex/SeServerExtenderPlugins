@@ -66,13 +66,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>taskkill /f /IM SEServerExtender.exe
-
-copy MotdPlugin.dll C:\Users\bjdro_000\AppData\Roaming\SpaceEngineersDedicated\Mods\MotdPlugin\
-
-cd /D F:\SteamLibrary\SteamApps\common\SpaceEngineers\DedicatedServer64
-
-start SEServerExtender.exe autostart debug=true</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

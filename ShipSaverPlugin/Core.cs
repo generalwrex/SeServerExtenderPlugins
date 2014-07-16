@@ -51,6 +51,9 @@ namespace ShipSaverPlugin
 		{
 		}
 
+		public override void Shutdown()
+		{
+		}
 		
 		#endregion
 
