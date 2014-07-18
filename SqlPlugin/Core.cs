@@ -34,7 +34,7 @@ namespace SqlPlugin
 		private static string m_databaseUser;
 		private static string m_databasePass;
 		private static int m_sqltickRate;
-		public static int m_databaseTickRate;IAppDomainSetup know
+		public static int m_databaseTickRate;
 
 		private static bool m_databaseEnabled;
 		private static bool m_databaseLocked;
@@ -51,7 +51,6 @@ namespace SqlPlugin
 		// Called when the server first launches
 		public Core()
 		{
-			Init();
 			Console.WriteLine("SQL Plugin '" + Id.ToString() + "' constructed!");
 		}
 
@@ -171,7 +170,7 @@ namespace SqlPlugin
 		[Description("Query tickrate? Server Extender is 20 tick / s, this must be in multiples of 20.")]
 		[Browsable(true)]
 		[ReadOnly(false)]
-		public bool DatabaseLocked
+		public int DatabaseLocked
 		{
 			get
 			{
@@ -251,61 +250,61 @@ namespace SqlPlugin
 			}
 		}
 
-		public void InsertPlayerInfo()
+		private void InsertPlayerInfo()
 		{
 
 		}
-		public void InsertCubeGrid()
+		private void InsertCubeGrid()
 		{
 
 		}
-		public void InsertInstance()
+		private void InsertInstance()
 		{
 
 		}
-		public void InsertPluginConfig()
-		{
-
-		}
-
-		public void UpdatePlayerInfo()
-		{
-
-		}
-		public void UpdateCubeGrid()
-		{
-
-		}
-		public void UpdateInstance()
-		{
-
-		}
-		public void UpdatePluginConfig()
+		private void InsertPluginConfig()
 		{
 
 		}
 
-		public void DeletePlayerInfo()
+		private void UpdatePlayerInfo()
+		{
+
+		}
+		private void UpdateCubeGrid()
+		{
+
+		}
+		private void UpdateInstance()
+		{
+
+		}
+		private void UpdatePluginConfig()
 		{
 
 		}
 
-		public void DeleteCubeGrid()
-		{
-
-		}
-		public void DeleteInstance()
-		{
-
-		}
-		public void DeletePluginConfig()
+		private void DeletePlayerInfo()
 		{
 
 		}
 
-		public List <string> [] SelectPlayerInfo()
+		private void DeleteCubeGrid()
 		{
-			    string query = "SELECT * FROM tableinfo";
+
+		}
+		private void DeleteInstance()
+		{
+
+		}
+		private void DeletePluginConfig()
+		{
+
+		}
+
+		private List <string> [] SelectPlayerInfo()
+		{
+			    string query = "SELECT * FROM PLAYERINFO";
 
 				//Create a list to store the result
 				 List< string >[] list = new List< string >[13];
@@ -354,19 +353,155 @@ namespace SqlPlugin
 				     return list;
 				  }
 		}
-		public List <string> [] SelectCubeGrid()
+		private List <string> [] SelectCubeGrid()
 		{
+			string query = "SELECT * FROM CUBEGRIDS";
 
+			//Create a list to store the result
+			List<string>[] list = new List<string>[13];
+			for (int x = 0; x < 13; x++)
+			{
+				list[x] = new List<string>();
+			}
+
+			//Open connection
+			if (this.ConnectToDatabase() == true)
+			{
+				//Create Command
+				MySqlCommand cmd = new MySqlCommand(query, connection);
+				//Create a data reader and Execute the command
+				MySqlDataReader dataReader = cmd.ExecuteReader();
+
+				//Read the data and store them in the list
+				while (dataReader.Read())
+				{
+					list[0].Add(dataReader["EntID"] + "");
+					list[1].Add(dataReader["BeaconName"] + "");
+					list[2].Add(dataReader["Owner"] + "");
+					list[3].Add(dataReader["Size"] + "");
+					list[4].Add(dataReader["FuelTime"] + "");
+					list[5].Add(dataReader["Power"] + "");
+					list[6].Add(dataReader["LocX"] + "");
+					list[7].Add(dataReader["LocY"] + "");
+					list[8].Add(dataReader["LocZ"] + "");
+				}
+
+				//close Data Reader
+				dataReader.Close();
+
+				//close Connection
+				this.DisconnectFromDatabase();
+
+				//return list to be displayed
+				return list;
+			}
+			else
+			{
+				return list;
+			}
 		}
-		public List <string> [] SelectInstance()
+		private List <string> [] SelectInstance()
 		{
+			string query = "SELECT * FROM INSTANCES";
 
+			//Create a list to store the result
+			List<string>[] list = new List<string>[13];
+			for (int x = 0; x < 13; x++)
+			{
+				list[x] = new List<string>();
+			}
+
+			//Open connection
+			if (this.ConnectToDatabase() == true)
+			{
+				//Create Command
+				MySqlCommand cmd = new MySqlCommand(query, connection);
+				//Create a data reader and Execute the command
+				MySqlDataReader dataReader = cmd.ExecuteReader();
+
+				//Read the data and store them in the list
+				while (dataReader.Read())
+				{
+					list[0].Add(dataReader["ID"] + "");
+					list[1].Add(dataReader["ServiceName"] + "");
+					list[2].Add(dataReader["WorldPath"] + "");
+					list[3].Add(dataReader["ExecPath"] + "");
+					list[4].Add(dataReader["Status"] + "");
+					list[5].Add(dataReader["Version"] + "");
+					list[6].Add(dataReader["Mods"] + "");
+					list[7].Add(dataReader["LastSave"] + "");
+					list[8].Add(dataReader["AssyMult"] + "");
+					list[9].Add(dataReader["RefMult"] + "");
+					list[10].Add(dataReader["RefEff"] + "");
+					list[11].Add(dataReader["WeldSpeed"] + "");
+					list[12].Add(dataReader["GrindSpeed"] + "");
+					list[13].Add(dataReader["InvMult"] + "");
+					list[14].Add(dataReader["Port"] + "");
+					list[15].Add(dataReader["MaxPlayers"] + "");
+					list[16].Add(dataReader["CurrentPlayers"] + "");
+				}
+
+				//close Data Reader
+				dataReader.Close();
+
+				//close Connection
+				this.DisconnectFromDatabase();
+
+				//return list to be displayed
+				return list;
+			}
+			else
+			{
+				return list;
+			}
 		}
-		public List <string> [] SelectPluginConfig()
+		private List <string> [] SelectPluginConfig()
 		{
+			string query = "SELECT * FROM PLUGINS";
 
+			//Create a list to store the result
+			List<string>[] list = new List<string>[13];
+			for (int x = 0; x < 13; x++)
+			{
+				list[x] = new List<string>();
+			}
+
+			//Open connection
+			if (this.ConnectToDatabase() == true)
+			{
+				//Create Command
+				MySqlCommand cmd = new MySqlCommand(query, connection);
+				//Create a data reader and Execute the command
+				MySqlDataReader dataReader = cmd.ExecuteReader();
+
+				//Read the data and store them in the list
+				while (dataReader.Read())
+				{
+					list[0].Add(dataReader["ID"] + "");
+					list[1].Add(dataReader["Name"] + "");
+					list[2].Add(dataReader["Motd"] + "");
+					list[3].Add(dataReader["Advert"] + "");
+					list[4].Add(dataReader["GCEnabled"] + "");
+					list[5].Add(dataReader["GCDelay"] + "");
+					list[6].Add(dataReader["WatchdogEnabled"] + "");
+					list[7].Add(dataReader["DBReporting"] + "");
+				}
+
+				//close Data Reader
+				dataReader.Close();
+
+				//close Connection
+				this.DisconnectFromDatabase();
+
+				//return list to be displayed
+				return list;
+			}
+			else
+			{
+				return list;
+			}
 		}
-		public int Count()
+		private int Count()
 		{
 
 		}
