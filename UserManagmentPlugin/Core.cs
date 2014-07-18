@@ -22,7 +22,7 @@ namespace UserManagmentPlugin
 	{
 		#region "Attributes"
 
-		static UserManagmentForm m_userManagmentForm;
+		static UserManagementForm m_userManagmentForm;
 
 		private static bool m_userManagmentWindowOpen;
 
@@ -33,11 +33,8 @@ namespace UserManagmentPlugin
 		// Called when the server first launches
 		public Core()
 		{
-			m_userManagmentForm = new UserManagmentForm();
-
-			// opening the form For Testing
-			m_userManagmentForm.ShowDialog();
-
+			m_userManagmentForm = new UserManagementForm();
+			
 			Console.WriteLine("User Management Plugin '" + Id.ToString() + "' constructed!");			
 		}
 
@@ -45,6 +42,16 @@ namespace UserManagmentPlugin
 		public override void Init()
 		{
 			Console.WriteLine("User Management Plugin '" + Id.ToString() + "' Initailized!");
+
+			UserManagement.Instance.AddUser("Wrex", 1234567, "Guest");
+			UserManagement.Instance.AddUser("Wrex", 1264567, "Guest");
+			UserManagement.Instance.AddUser("Wrex", 1287667, "Guest");
+			UserManagement.Instance.AddUser("Wrex", 1864677, "Guest");
+			UserManagement.Instance.AddUser("Wrex", 9434578, "Guest");
+			UserManagement.Instance.AddUser("Wrex", 1273367, "Guest");
+
+			UserManagement.Instance.UpdateUserRank(1234567, "Admin");
+
 		}
 
 		#endregion
