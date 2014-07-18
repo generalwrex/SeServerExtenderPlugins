@@ -33,12 +33,15 @@ namespace SqlPlugin
 		private static string m_DatabasePort;
 		private static string m_databaseUser;
 		private static string m_databasePass;
-		private static int m_queryDelay;
+		private static int m_sqltickRate;
+		public static int m_databaseTickRate;IAppDomainSetup know
+
 		private static bool m_databaseEnabled;
-		private static bool m_databaseSettingLock;
-		private static bool m_isDebugging;
+		private static bool m_databaseLocked;
+		private static bool m_isDebugging; //SandboxGameAssemblyWrapper.IsDebugging
+
 		private static bool m_databaseSettingsChanged;
-		private 
+		
 		private MySqlConnection connection;
 		
 		#endregion
@@ -48,7 +51,7 @@ namespace SqlPlugin
 		// Called when the server first launches
 		public Core()
 		{
-			Init()
+			Init();
 			Console.WriteLine("SQL Plugin '" + Id.ToString() + "' constructed!");
 		}
 
@@ -138,22 +141,22 @@ namespace SqlPlugin
 		[Description("Debug Enabled?")]
 		[Browsable(true)]
 		[ReadOnly(false)]
-		public string DatabaseEnabled
+		public bool DatabaseEnabled
 		{
 			get
 			{
-				return m_databaseEnabled; // Send m_databaseNames value to the plugins properties panel
+				return m_isDebugging; // Send m_databaseNames value to the plugins properties panel
 			}
 			set
 			{
-				m_databaseEnabled = value; // if the value changes in the code, it updates the plugins properties panel
+				m_isDebugging = value; // if the value changes in the code, it updates the plugins properties panel
 			}
 		}
 		[Category("SQL Database")]
 		[Description("Settings Locked? Checking the connection works is recommended before setting this to true.")]
 		[Browsable(true)]
 		[ReadOnly(false)]
-		public string DatabaseLocked
+		public bool DatabaseLocked
 		{
 			get
 			{
@@ -164,12 +167,27 @@ namespace SqlPlugin
 				m_databaseLocked = value; // if the value changes in the code, it updates the plugins properties panel
 			}
 		}
+		[Category("SQL Database")]
+		[Description("Query tickrate? Server Extender is 20 tick / s, this must be in multiples of 20.")]
+		[Browsable(true)]
+		[ReadOnly(false)]
+		public bool DatabaseLocked
+		{
+			get
+			{
+				return m_databaseTickRate; // Send m_databaseNames value to the plugins properties panel
+			}
+			set
+			{
+				m_databaseTickRate = value; // if the value changes in the code, it updates the plugins properties panel
+			}
+		}
 		#endregion
 
 		#region "Event Handlers"
 
 		// Runs 10 times a second when server is running
-		//This cannot run 10 times a second, more like once every 10 seconds. I guess I could count it between each query ~Vl4dim1r
+		//This cannot run 10 times a second, more like once every 10 seconds. I guess I could count 100 ticksbetween each query ~Vl4dim1r
 		public override void Update()
 		{
 			// Idk what to put here for an example, look at my MOTDPlugin
@@ -198,7 +216,7 @@ namespace SqlPlugin
 			try
 			{
 				// I'm sure failing to connect to a database could cause an exception!
-				connection.Open()
+				connection.Open();
 					return true;
 			}
 			catch (MySQLException ex)
@@ -219,7 +237,7 @@ namespace SqlPlugin
 			}
 		}
 
-		private bool DisonnectFromDatabase()
+		private bool DisconnectFromDatabase()
 		{
 			try
 			{
@@ -297,7 +315,7 @@ namespace SqlPlugin
 				}
 
 				 //Open connection
-				 if (this.OpenConnection() == true)
+				 if (this.ConnectToDatabase() == true)
 				 {
 					    //Create Command
 					   MySqlCommand cmd = new MySqlCommand(query, connection);
@@ -326,7 +344,7 @@ namespace SqlPlugin
 					 dataReader.Close();
 
 					//close Connection
-					this.CloseConnection();
+					this.DisconnectFromDatabase();
 
 					 //return list to be displayed
 					 return list;
