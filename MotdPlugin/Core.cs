@@ -13,23 +13,46 @@ using SEModAPIExtensions.API;
 using SEModAPIExtensions.API.Plugin;
 using SEModAPIExtensions.API.Plugin.Events;
 
+using SEModAPIInternal.API;
 using SEModAPIInternal.API.Common;
+using SEModAPIInternal.API.Entity;
+using SEModAPIInternal.API.Entity.Sector;
+using SEModAPIInternal.API.Entity.Sector.SectorObject;
+using SEModAPIInternal.API.Entity.Sector.SectorObject.CubeGrid;
+using SEModAPIInternal.API.Entity.Sector.SectorObject.CubeGrid.CubeBlock;
 using SEModAPIInternal.API.Server;
-using SEModAPIInternal.Support;
+
+using SEModAPI.API;
+using SEModAPI.API.Definitions;
+using SEModAPI.Support;
+
+
+
 
 namespace MotdPlugin
 {
     public class Core : PluginBase, IChatEventHandler
     {
 
-
         #region "Attributes"
+
+		private static MotdPluginConfigForm m_pluginConfigForm;
+
+		private static MotdPluginData m_definition;
+
+		private static FileIODefinitions m_fileIODefinitions;
+
+		private static Adverts m_adverts;
+
 
         private static string m_dataFile;
         private static string m_assemblyFolder;
 
-        private static string m_motdString;
+        private static List<string> m_motdLines;
+		private static List<string> m_motdParsedLines;
+
         private static string m_motdTitle;
+
         private static string m_advertsString;
         private static string[] m_seperateAdverts;
 
@@ -38,62 +61,44 @@ namespace MotdPlugin
         private static bool m_motdActive;
         private static bool m_advertsActive;
 
-        private static bool m_motdChanged;
-        private static bool m_advertsChanged;
 
-        private Dictionary<Timer, string> timers = new Dictionary<Timer, string>();
+        private Dictionary<Timer, string> m_timers = new Dictionary<Timer, string>();
+
         private List<string> AdvertList = new List<string>();
 
         #endregion
 
         #region "Constructors and Initializers"
 
-        public Core()
-        {
-            // Default settings if the file doesn't exist.
-            m_motdActive = false;
-            m_advertsActive = false;
+		public Core(MotdPluginData definition)
+		{
+			m_definition = definition;
 
-            m_motdChanged = false;
-            m_advertsChanged = false;
+			// Default settings if the file doesn't exist.
+			m_pluginConfigForm.MotdActive = false;
+            m_pluginConfigForm.AdvertsActive = false;
 
-            m_motdTitle = "[Message Of The Day]";
-            m_motdString = "Write your Motd here.";
-			m_advertsString = "Do /Motd to see the Message of the day!::500";
 
             // Get the current path of the DLL.
             m_assemblyFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             m_dataFile = Path.Combine(m_assemblyFolder, "MotdPlugin_Settings.xml");
 
             try
-            {
-                // Create the data file if is doesn't exist.
-                if (!File.Exists(m_dataFile))
-                {
-                    XDocument doc = new XDocument(
-                        new XElement("Settings",
-                        new XElement("MotdActive", m_motdActive),
-                        new XElement("MotdTitle", m_motdTitle),
-                        new XElement("MotdString", m_motdString),
-                        new XElement("AdvertsActive", m_advertsActive),
-                        new XElement("AdvertsString", m_advertsString)
-                        )
-                    );
-                    doc.Save(m_dataFile);
-                }
-                Console.WriteLine("Motd Plugin '" + Id.ToString() + "' constructed!");
+            {	
+				m_fileIODefinitions.Load();
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Motd Plugin - Error: " + ex.ToString());
+				Console.WriteLine("Motd Plugin - Error: " + ex.ToString());
             }
+
         }
 
         public override void Init()
         {
             Console.WriteLine("Motd Plugin '" + Id.ToString() + "' initialized!");
             Console.WriteLine("Motd Plugin - Loading Data");
-            this.LoadData();
+			m_fileIODefinitions.Load();
             m_isDebugging = SandboxGameAssemblyWrapper.IsDebugging;
         }
 
@@ -101,75 +106,65 @@ namespace MotdPlugin
 
         #region "Properties"
 
-        // Properties for the Motd.
-        [Category("Motd Plugin")]
-        [Description("Enables or Disables the /motd chat command")]
-        [Browsable(true)]
-        [ReadOnly(false)]
+		public bool MotdChanged
+		{
+			get;
+			private set;
+		}
+
+		public bool AdvertsChanged
+		{
+			get;
+			private set;
+		}
+
         public bool MotdActive
         {
-            get { return m_motdActive; }
+			get { return m_definition.MotdActive; }
             set
             {
-                m_motdActive = value;
-                m_motdChanged = true;
+				m_definition.MotdActive = value;
+				MotdChanged = true;
             }
         }
 
-        [Category("Motd Plugin")]
-        [Description("The Title of your Message of the day,  shown above the Motd text.")]
-        [Browsable(true)]
-        [ReadOnly(false)]
         public string MotdTitle
         {
-            get { return m_motdTitle; }
+            get { return m_definition.MotdTitle; }
             set
             {
-                m_motdTitle = value;
-                m_motdChanged = true;
+                m_definition.MotdTitle = value;
+                MotdChanged = true;
             }
         }
 
-        [Category("Motd Plugin")]
-        [Description("Your Message of the day, dont make it longer than 4 lines of characters!")]
-        [Browsable(true)]
-        [ReadOnly(false)]
-        public string Motd
+        public List<string> MotdLines
         {
-            get { return m_motdString; }
+            get { return m_definition.MotdLines; }
             set
             {
-                m_motdString = value;
-                m_motdChanged = true;
+                m_definition.MotdLines = value;
+                MotdChanged = true;
             }
         }
 
-        // Properties for the Adverts.
-        [Category("Adverts Plugin")]
-        [Description("Enables or Disables the adverts from showing.")]
-        [Browsable(true)]
-        [ReadOnly(false)]
         public bool AdvertsActive
         {
-            get { return m_advertsActive; }
+            get { return m_definition.AdvertsActive; }
             set
             {
-                m_advertsActive = value;
-                m_advertsChanged = true;
+                m_definition.AdvertsActive = value;
+                AdvertsChanged = true;
             }
         }
 
-        [Category("Adverts Plugin")]
-        [Description("AdvertText::TimeInSeconds, use ;; to add another advert   Example: advert::10;;advert2::30")]
-        [Browsable(true)]
-        [ReadOnly(false)]
         public string Adverts
         {
             get { return m_advertsString; }
             set
             {
                 m_advertsString = value;
-                m_advertsChanged = true;
+                AdvertsChanged = true;
             }
         }
 
@@ -180,29 +175,27 @@ namespace MotdPlugin
         public override void Update()
         {
             // Checks and sets the new Motd text.        
-            if (m_motdChanged && m_motdString != "" && m_motdTitle != "")
+            if (MotdChanged && m_motdLines.Count() != 0 && m_motdTitle != "")
             {
-                this.SaveData();
+				m_fileIODefinitions.Save();
 
-                m_motdChanged = false;
+                MotdChanged = false;
             }
 
             // Checks and sets the Adverts.
-            if (m_advertsChanged && m_advertsString != "")
+            if (AdvertsChanged && m_advertsString != "")
             {
                 if (m_advertsActive)
                 {
-                    this.ClearAdverts();
+                    this.ClearAdvertTimers();
                     this.ParseAdverts();
                 }
                 else
                 {
-                    this.ClearAdverts();
+                    this.ClearAdvertTimers();
                 }
 
-                this.SaveData();
-
-                m_advertsChanged = false;
+                AdvertsChanged = false;
             }
         }
 
@@ -220,7 +213,12 @@ namespace MotdPlugin
                 if (client.message.Substring(0, 5).Contains(("/motd")))
                 {
                     ChatManager.Instance.SendPrivateChatMessage(id, m_motdTitle);
-                    ChatManager.Instance.SendPrivateChatMessage(id, m_motdString);
+
+					//foreach(string line in ParseMotd())
+					//{
+					//	ChatManager.Instance.SendPrivateChatMessage(id, line);
+					//}
+                    
                 }
             }
             catch (Exception ex)
@@ -236,95 +234,39 @@ namespace MotdPlugin
 		// Called when the server is shutdown, or plugin is unloaded.
 		public override void Shutdown()
 		{
-			this.SaveData();
-			this.ClearAdverts();
+			m_fileIODefinitions.Save();
+			this.ClearAdvertTimers();
 		}
 
         #endregion
 
         #region "Methods"
 
-        // Load settings from the XML file.
-        private void LoadData()
-        {
-            try
-            {
-                if (File.Exists(m_dataFile))
-                {
-                    XDocument doc = XDocument.Load(m_dataFile);
-                    foreach (XElement settings in doc.Descendants("Settings"))
-                    {
-                        if (settings.HasElements)
-                        {
-                            if (m_isDebugging)
-                                Console.WriteLine("Motd Plugin - Loading Message Of The Day");
-
-                            m_motdActive = Boolean.Parse(settings.Element("MotdActive").Value);
-                            m_motdTitle = settings.Element("MotdTitle").Value;
-                            m_motdString = settings.Element("MotdString").Value;
-
-                            if (m_isDebugging)
-                                Console.WriteLine("Motd Plugin - Loading Adverts");
-
-                            m_advertsActive = Boolean.Parse(settings.Element("AdvertsActive").Value);
-                            m_advertsString = settings.Element("AdvertsString").Value;
-
-                            this.ParseAdverts();
-
-                            Console.WriteLine("Motd Plugin - Data Loaded!");
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Motd Plugin - Error: " + ex.ToString());
-            }
-
-        }
-
-        // Save data to the XML file.
-        private void SaveData()
-        {
-            try
-            {
-                if (File.Exists(m_dataFile))
-                {
-                    XDocument xmlfile = XDocument.Load(m_dataFile);
-                    foreach (XElement settings in xmlfile.Descendants("Settings"))
-                    {
-                        settings.SetElementValue("MotdActive", m_motdActive);
-                        settings.SetElementValue("MotdTitle", m_motdTitle);
-                        settings.SetElementValue("MotdString", m_motdString);
-                        settings.SetElementValue("AdvertsActive", m_advertsActive);
-                        settings.SetElementValue("AdvertsString", m_advertsString);
-                    }
-
-                    if (m_isDebugging)
-                        Console.WriteLine("Motd Plugin - Saving Data File");
-
-                    xmlfile.Save(m_dataFile);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Motd Plugin - Error: " + ex.ToString());
-            }
-        }
-
-        private void ClearAdverts()
+        private void ClearAdvertTimers()
         {
             // Disable and Stop all timers in the Dictonary
-            foreach (Timer timer in timers.Keys)
+            foreach (Timer timer in m_timers.Keys)
             {
                 timer.Enabled = false;
                 timer.Stop();
             }
 
             // Clear out the Dictionary and AdvertList list.
-            timers.Clear();
-            AdvertList.Clear();
+            m_timers.Clear();
         }
+		/*
+		public string ReplaceFormatting(string stringtoparse)
+		{
+			string parsedstring = "";
+
+			parsedstring += stringtoparse.Replace("%time%", DateTime.Now.TimeOfDay.ToString());
+			parsedstring += stringtoparse.Replace("%date%", DateTime.Today.Date.ToString());
+			parsedstring += stringtoparse.Replace("%asteroidcount%",
+
+
+			return parsedstring;
+		}
+		*/
 
         private void ParseAdverts()
         {
@@ -347,14 +289,9 @@ namespace MotdPlugin
                     // For each advert in the list;
                     // Create a timer, name it with the advert strings.
                     // When the time is up for each advert it prints to Chat.
-                    AdvertList.ForEach(delegate(String advert)
+                    AdvertList.ForEach(delegate(string advert)
                     {
-						if (!advert.Contains("::"))
-						{
-							Console.WriteLine("Adverts must contain two semi-colons before the time!");
-							return;
-						}
-
+	
                         string[] splitadverts = advert.Split(new string[] { "::" },
                             StringSplitOptions.None);
 
@@ -362,13 +299,13 @@ namespace MotdPlugin
                         Timer time = new Timer();
                         time.AutoReset = true;
                         time.Interval = 1000 * Int32.Parse(splitadverts.ElementAt(1));
-                        timers.Add(time, splitadverts[0]);
+                        m_timers.Add(time, splitadverts[0]);
 
                         time.Elapsed += delegate(object sender, System.Timers.ElapsedEventArgs eventArgs)
                         {
                             Timer t = (Timer)sender;
-                            Console.WriteLine(timers[t]);
-                            ChatManager.Instance.SendPublicChatMessage(timers[t]);
+                            Console.WriteLine(m_timers[t]);
+                            ChatManager.Instance.SendPublicChatMessage(m_timers[t]);
                         };
 
                         time.Enabled = true;
