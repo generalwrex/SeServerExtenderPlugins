@@ -23,9 +23,6 @@ namespace SqlPlugin
 		// variable definitions
 		// access static (string,bool, ect ect) m_variableName;
 
-		private static string m_dataFile;
-		private static string m_assemblyFolder;
-
 		private static string m_firstRun;
 
 		private static string m_databaseName;
@@ -60,7 +57,7 @@ namespace SqlPlugin
 
 			string connectionString;
 			connectionString = "SERVER=" + m_databaseHost + ";" + "DATABASE=" +
-			m_databaseName + ";" + "UID=" + m_databaseUser + ";" + "PASSWORD=" + m_databasePass + ";";
+			m_databaseName + ";" + "PORT=" + m_DatabasePort + ";" + "UID=" + m_databaseUser + ";" + "PASSWORD=" + m_databasePass + ";";
 
 			connection = new MySqlConnection(connectionString);
 			Console.WriteLine("SQL Plugin '" + Id.ToString() + "' initialized!");
@@ -108,7 +105,7 @@ namespace SqlPlugin
 		[Description("The password used to connect to SQl host")]
 		[Browsable(true)]
 		[ReadOnly(false)]
-		public string DatabaseName
+		public string DatabasePass
 		{
 			get
 			{
@@ -170,7 +167,7 @@ namespace SqlPlugin
 		[Description("Query tickrate? Server Extender is 20 tick / s, this must be in multiples of 20.")]
 		[Browsable(true)]
 		[ReadOnly(false)]
-		public int DatabaseLocked
+		public int DatabaseTickrate
 		{
 			get
 			{
@@ -202,7 +199,10 @@ namespace SqlPlugin
 				//else run player info update
 
 		}
+		public override void Shutdown()
+		{
 
+		}
 
 		#endregion
 
@@ -235,7 +235,6 @@ namespace SqlPlugin
 
 			}
 		}
-
 		private bool DisconnectFromDatabase()
 		{
 			try
@@ -247,6 +246,51 @@ namespace SqlPlugin
 			{
 				LogManager.APILog.WriteLineAndConsole(ex.Message);
 				return false;
+			}
+		}
+
+		private void CreatePlayersTable()
+		{
+			string query = "CREATE TABLE SEDS.PLAYERS (SteamID INT(20), EntID INT(20), SteamName VARCHAR(20), Health INT(10), Energy INT(10), Credits INT(10), Kills INT(10), Deaths INT(10), OwnedItems VARCHAR(255), FirstJoin VARCHAR(20), LastJoin VARCHAR(20), PlayTime VARCHAR(20), Edited INT(1))";
+			if (this.ConnectToDatabase() == true)
+			{
+				MySqlCommand cmd = new MySqlCommand(query, connection);
+				cmd.ExecuteNonQuery();
+				this.DisconnectFromDatabase();
+
+			}
+		}
+		private void CreateCubeGridsTable()
+		{
+			string query = "CREATE TABLE SEDS.CUBEGRIDS (ID INT(20), Beacon VARCHAR(20), Owner INT(20), Size INT(20), FuelTime INT(20), Power INT(1), LocX INT(10), LocY INT(10), LocZ Int(10), Edited INT(1))";
+			if (this.ConnectToDatabase() == true)
+			{
+				MySqlCommand cmd = new MySqlCommand(query, connection);
+				cmd.ExecuteNonQuery();
+				this.DisconnectFromDatabase();
+
+			}
+		}
+		private void CreateInstancesTable()
+		{
+			string query = "CREATE TABLE SEDS.INSTANCES (ID INT(20), ServiceName VARCHAR(20), WorldPath VARCHAR(255), ExecPath VARCHAR(255), Status VARCHAR(20), Version VARCHAR(10), Mods VARCHAR(10), LastSave VARCHAR(20), AssyMult INT(5), RefMult INT(5), RefEff INT(5), WeldSpeed INT(5), GrindSpeed INT(5), InvMult INT(10), Port INT(5), MaxPlayers INT(3), CurrentPlayers INT(3))";
+			if (this.ConnectToDatabase() == true)
+			{
+				MySqlCommand cmd = new MySqlCommand(query, connection);
+				cmd.ExecuteNonQuery();
+				this.DisconnectFromDatabase();
+
+			}
+		}
+		private void CreatePluginsTable()
+		{
+			string query = "CREATE TABLE SEDS.PLUGINS (ID INT(50), Name VARCHAR(20), Motd VARCHAR(255), Advert VARCHAR(255), GCEnabled INT(1), GCDelay INT(20), WatchdogEnabled INT(1), DBReporting INT(1), Edited INT(1))";
+			if (this.ConnectToDatabase() == true)
+			{
+				MySqlCommand cmd = new MySqlCommand(query, connection);
+				cmd.ExecuteNonQuery();
+				this.DisconnectFromDatabase();
+
 			}
 		}
 
@@ -416,7 +460,6 @@ namespace SqlPlugin
 				this.DisconnectFromDatabase();
 			}
 		}
-
 		private void DeleteCubeGrid()
 		{
 			string query = "DELETE FROM CUBEGRIDS WHERE ID=ID";
