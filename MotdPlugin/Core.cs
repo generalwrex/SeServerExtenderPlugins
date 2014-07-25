@@ -27,18 +27,16 @@ using SEModAPI.API.Definitions;
 using SEModAPI.Support;
 
 
-
-
 namespace MotdPlugin
 {
-    public class Core : PluginBase, IChatEventHandler
+    public class MotdPluginCore : PluginBase, IChatEventHandler
     {
 
         #region "Attributes"
 
 		private static MotdPluginConfigForm m_pluginConfigForm;
 
-		private static MotdPluginData m_definition;
+		private static MotdPluginData m_motdPluginData;
 
 		private static FileIODefinitions m_fileIODefinitions;
 
@@ -53,45 +51,55 @@ namespace MotdPlugin
 
         private static string m_motdTitle;
 
-        private static string m_advertsString;
-        private static string[] m_seperateAdverts;
 
         private static bool m_isDebugging;
 
-        private static bool m_motdActive;
-        private static bool m_advertsActive;
-
-
         private Dictionary<Timer, string> m_timers = new Dictionary<Timer, string>();
-
-        private List<string> AdvertList = new List<string>();
 
         #endregion
 
         #region "Constructors and Initializers"
 
-		public Core(MotdPluginData definition)
+		public MotdPluginCore()
 		{
-			m_definition = definition;
-
-			// Default settings if the file doesn't exist.
-			m_pluginConfigForm.MotdActive = false;
-            m_pluginConfigForm.AdvertsActive = false;
-
-
-            // Get the current path of the DLL.
-            m_assemblyFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            m_dataFile = Path.Combine(m_assemblyFolder, "MotdPlugin_Settings.xml");
-
             try
-            {	
-				m_fileIODefinitions.Load();
+            {
+				// Get the current path of the DLL.
+				m_assemblyFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+				m_dataFile = Path.Combine(m_assemblyFolder, "MotdPlugin_Settings.xml");
+
+				if (!File.Exists(m_dataFile))
+				{
+
+					m_motdPluginData.MotdActive = false;
+					m_motdPluginData.MotdTitle = "[Message Of The Day - %date%%time12%";
+
+					string[] m_defaultMotd = { "" };
+					m_defaultMotd[0] = "Welcome to %servername%.";
+					m_defaultMotd[1] = "Gamemode : %gamemode%. ";
+					m_defaultMotd[2] = "World: %worldname%.";
+					m_defaultMotd[3] = "Asteroids: %asteroidcount%";
+					m_defaultMotd[4] = "Players: %playercount%";
+					m_defaultMotd[5] = "";
+					m_defaultMotd[6] = "You can Have up to 45 characters per line";
+					m_defaultMotd[7] = "and 8 lines  because of the current limitation";
+
+					m_motdPluginData.MotdLines.AddRange(m_defaultMotd);
+
+					m_motdPluginData.AdvertsActive = false;
+
+					m_adverts.AddAdvert("readmotd", "Use /motd to read the Message of the day!", 360, true);
+					m_adverts.AddAdvert("welcome", "Welcome to the server! Its %time12% on %date%!", 360, true);
+
+					m_motdPluginData.AdvertsList.AddRange(m_adverts.AdvertList);
+				}
             }
             catch (Exception ex)
             {
 				Console.WriteLine("Motd Plugin - Error: " + ex.ToString());
             }
 
+			Console.WriteLine("Motd Plugin '" + Id.ToString() + "' initialized!");
         }
 
         public override void Init()
@@ -106,6 +114,18 @@ namespace MotdPlugin
 
         #region "Properties"
 
+
+		[Category("Motd Plugin")]
+		[Description("Shows the Config Dialog")]
+		[Browsable(true)]
+		[ReadOnly(false)]
+		public bool ShowConfig
+		{
+			get { return m_pluginConfigForm.Visible; }
+			set { m_pluginConfigForm.Show(); }
+		}
+
+
 		public bool MotdChanged
 		{
 			get;
@@ -115,59 +135,49 @@ namespace MotdPlugin
 		public bool AdvertsChanged
 		{
 			get;
-			private set;
+			set;
 		}
 
         public bool MotdActive
         {
-			get { return m_definition.MotdActive; }
+			get { return m_motdPluginData.MotdActive; }
             set
             {
-				m_definition.MotdActive = value;
+				m_motdPluginData.MotdActive = value;
 				MotdChanged = true;
             }
         }
 
         public string MotdTitle
         {
-            get { return m_definition.MotdTitle; }
+			get { return m_motdPluginData.MotdTitle; }
             set
             {
-                m_definition.MotdTitle = value;
+				m_motdPluginData.MotdTitle = value;
                 MotdChanged = true;
             }
         }
 
         public List<string> MotdLines
         {
-            get { return m_definition.MotdLines; }
+			get { return m_motdPluginData.MotdLines; }
             set
             {
-                m_definition.MotdLines = value;
+				m_motdPluginData.MotdLines = value;
                 MotdChanged = true;
             }
         }
 
         public bool AdvertsActive
         {
-            get { return m_definition.AdvertsActive; }
+			get { return m_motdPluginData.AdvertsActive; }
             set
             {
-                m_definition.AdvertsActive = value;
+				m_motdPluginData.AdvertsActive = value;
                 AdvertsChanged = true;
             }
         }
-
-        public string Adverts
-        {
-            get { return m_advertsString; }
-            set
-            {
-                m_advertsString = value;
-                AdvertsChanged = true;
-            }
-        }
-
+			
         #endregion
 
         #region "EventHandlers"
@@ -175,20 +185,19 @@ namespace MotdPlugin
         public override void Update()
         {
             // Checks and sets the new Motd text.        
-            if (MotdChanged && m_motdLines.Count() != 0 && m_motdTitle != "")
+            if (MotdChanged && m_motdLines.Count() != 0 && MotdTitle != "")
             {
-				m_fileIODefinitions.Save();
-
+				bool saved = m_fileIODefinitions.Save();
                 MotdChanged = false;
             }
 
             // Checks and sets the Adverts.
-            if (AdvertsChanged && m_advertsString != "")
+            if (AdvertsChanged && Adverts.Instance.AdvertList.Count() != 0)
             {
-                if (m_advertsActive)
+                if (AdvertsActive)
                 {
-                    this.ClearAdvertTimers();
                     this.ParseAdverts();
+					m_fileIODefinitions.Save();
                 }
                 else
                 {
@@ -204,7 +213,7 @@ namespace MotdPlugin
         {
             ulong id = client.sourceUserId;
 
-            if (!m_motdActive)
+            if (!MotdActive)
                 return;
 
             try
@@ -212,12 +221,12 @@ namespace MotdPlugin
                 // If they said /motd                
                 if (client.message.Substring(0, 5).Contains(("/motd")))
                 {
-                    ChatManager.Instance.SendPrivateChatMessage(id, m_motdTitle);
+                    ChatManager.Instance.SendPrivateChatMessage(id, ReplaceFormatting(MotdTitle));
 
-					//foreach(string line in ParseMotd())
-					//{
-					//	ChatManager.Instance.SendPrivateChatMessage(id, line);
-					//}
+					foreach(string line in MotdLines)
+					{
+						ChatManager.Instance.SendPrivateChatMessage(id, ReplaceFormatting(line));
+					}
                     
                 }
             }
@@ -254,19 +263,17 @@ namespace MotdPlugin
             // Clear out the Dictionary and AdvertList list.
             m_timers.Clear();
         }
-		/*
-		public string ReplaceFormatting(string stringtoparse)
+		
+		private string ReplaceFormatting(string stringtoparse)
 		{
 			string parsedstring = "";
 
-			parsedstring += stringtoparse.Replace("%time%", DateTime.Now.TimeOfDay.ToString());
-			parsedstring += stringtoparse.Replace("%date%", DateTime.Today.Date.ToString());
-			parsedstring += stringtoparse.Replace("%asteroidcount%",
+			parsedstring = stringtoparse.Replace("%time%", DateTime.Now.TimeOfDay.ToString());
+			parsedstring = parsedstring.Replace("%date%", DateTime.Today.Date.ToString());
 
 
 			return parsedstring;
 		}
-		*/
 
         private void ParseAdverts()
         {
@@ -274,42 +281,46 @@ namespace MotdPlugin
             {
                 if (m_isDebugging)
                     Console.WriteLine("Motd Plugin - Parsing Adverts");
-
-                // Seperate the adverts at the semicolons.
-                m_seperateAdverts = m_advertsString.Split(new string[] { ";;" }, StringSplitOptions.None);
-
+        
 				if (m_isDebugging)
-					Console.WriteLine("Motd Plugin - Parsed {0} Adverts.", m_seperateAdverts.Count());
+					Console.WriteLine("Motd Plugin - Parsed {0} Adverts.", Adverts.Instance.AdvertList.Count());
 
-                // Add all the adverts to the AdvertList
-                AdvertList.AddRange(m_seperateAdverts);
 
-                if (m_advertsActive)
+                if (AdvertsActive)
                 {
                     // For each advert in the list;
                     // Create a timer, name it with the advert strings.
                     // When the time is up for each advert it prints to Chat.
-                    AdvertList.ForEach(delegate(string advert)
+					Adverts.Instance.AdvertList.ForEach(delegate(Adverts.Advert advert)
                     {
-	
-                        string[] splitadverts = advert.Split(new string[] { "::" },
-                            StringSplitOptions.None);
 
-                        // Setup the timers.
-                        Timer time = new Timer();
-                        time.AutoReset = true;
-                        time.Interval = 1000 * Int32.Parse(splitadverts.ElementAt(1));
-                        m_timers.Add(time, splitadverts[0]);
+							// Setup the timers.
+							Timer time = new Timer();
+							time.AutoReset = true;
+							time.Interval = 1000 * advert.Time;
+							m_timers.Add(time, ReplaceFormatting(advert.Text));
 
-                        time.Elapsed += delegate(object sender, System.Timers.ElapsedEventArgs eventArgs)
-                        {
-                            Timer t = (Timer)sender;
-                            Console.WriteLine(m_timers[t]);
-                            ChatManager.Instance.SendPublicChatMessage(m_timers[t]);
-                        };
+							time.Elapsed += delegate(object sender, System.Timers.ElapsedEventArgs eventArgs)
+							{
+								Timer t = (Timer)sender;
 
-                        time.Enabled = true;
-                        time.Start();
+								if(m_isDebugging)
+									Console.WriteLine(m_timers[t]);
+
+								ChatManager.Instance.SendPublicChatMessage(m_timers[t]);
+							};
+
+							if (advert.Active)
+							{
+								time.Enabled = true;
+								time.Start();
+							}
+							else
+							{
+								time.Enabled = false;
+								time.Stop();
+							}
+
                     });
                 }
             }

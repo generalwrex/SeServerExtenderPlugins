@@ -104,6 +104,7 @@ namespace MotdPlugin
 
 		}
       
+		// TODO : Remove Advert Function
 		#endregion
 
 

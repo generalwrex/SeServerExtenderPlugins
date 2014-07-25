@@ -16,9 +16,9 @@ namespace MotdPlugin
 
 		private static MotdPluginConfigForm m_instance;
 
-		private static bool m_motdActive;
-		private static bool m_advertsActive;
+		private static MotdPluginCore m_motdPluginCore;
 
+		private static Adverts m_adverts;
 		#endregion
 
 		#region "Constructors And Initalizers"
@@ -46,18 +46,6 @@ namespace MotdPlugin
 			}
 		}
 
-		public bool MotdActive
-		{
-			get { return m_motdActive; }
-			set { m_motdActive = value; }
-		}
-
-		public bool AdvertsActive
-		{
-			get { return m_advertsActive; }
-			set { m_advertsActive = value; }
-		}
-
 		// Set the status bar text
 		public string SetStatus
 		{
@@ -68,12 +56,36 @@ namespace MotdPlugin
 
 		#region "Control"
 
-		private void CHK_MotdPlugin_Motd_Active_CheckedChanged(object sender, EventArgs e)
+		private void BTN_MotdPlugin_Motd_Save_Click(object sender, EventArgs e)
 		{
-			m_motdActive = CHK_MotdPlugin_Motd_Active.Checked;
+			m_motdPluginCore.MotdActive = CHK_MotdPlugin_Motd_Active.Checked;
+			m_motdPluginCore.MotdTitle = TXT_MotdPlugin_Motd_Title.Text;
+			m_motdPluginCore.MotdLines = TXT_MotdPlugin_Motd_Body.Lines.ToList();
 		}
 
-		private void BTN_MotdPlugin_Motd_Save_Click(object sender, EventArgs e)
+		private void BTN_MotdPlugin_Adverts_NewAdvert_Click(object sender, EventArgs e)
+		{
+			string name = TXT_MotdPlugin_Adverts_Name.Text;
+			string text = TXT_MotdPlugin_Adverts_Text.Text;
+			int time = (int)NUM_MotdPlugin_Adverts_Time.Value;
+			bool active = CHK_MotdPlugin_Adverts_EnableAdvert.Checked;
+
+			m_adverts.AddAdvert(name, text, time, active);
+
+			m_motdPluginCore.AdvertsChanged = true;
+		}
+
+		private void BTN_MotdPlugin_Adverts_Update_Click(object sender, EventArgs e)
+		{
+
+		}
+
+		private void BTN_MotdPlugin_Adverts_DeleteAdvert_Click(object sender, EventArgs e)
+		{
+
+		}
+
+		private void LST_AdvertsConfig_Adverts_SelectedIndexChanged(object sender, EventArgs e)
 		{
 
 		}
@@ -81,16 +93,6 @@ namespace MotdPlugin
 		#endregion
 
 		#region "Methods"
-
-		public List<string> GetMotdLines()
-		{
-			return TXT_MotdPlugin_Motd_Body.Lines.ToList() ;
-		}
-
-		public string GetMotdTitle()
-		{
-			return TXT_MotdPlugin_Motd_Title.Text;
-		}
 
 		#endregion
 
